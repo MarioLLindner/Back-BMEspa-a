@@ -6,15 +6,26 @@ import { Empresa } from "./empresa.entity";
 export class EmpresasController {
   constructor(private empresasService: EmpresasService) { }
 
+
   @Get()
-  public getEmpresas():Promise<Empresa[]> {
+  public buscarMisCodEmpresas(): Promise<Empresa[]> {
     console.log("Empresas back");
-    return this.empresasService.getEmpresas();
+    return this.empresasService.buscarMisCodEmpresas();
   }
-  
+
   @Get('/:codEmpresa')
-  public getEmpresa(@Param('codEmpresa') codEmpresa: string):Promise<Empresa> {
+  public getEmpresa(@Param('codEmpresa') codEmpresa: string): Promise<Empresa> {
     console.log("Empresas back");
     return this.empresasService.getEmpresa(codEmpresa);
   }
+
+  @Get('/guardar/:codEmp')
+  async guardarEmpresa(@Param('codEmp') codEmpresa: string): Promise<Empresa> {
+    return this.empresasService.guardarEmpresa(codEmpresa);
+  }
+
+  // @Get('/find/:codEmp')
+  // async buscarEmpresa(@Param('codEmp') codEmpresa: string): Promise<Empresa> {
+  //   return this.empresasService.buscarEmpresa(codEmpresa);
+  // }
 }

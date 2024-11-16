@@ -1,63 +1,187 @@
 import { Injectable, } from '@nestjs/common';
 import { Cotizacion } from './cotizacion.entity';
-import { Repository } from 'typeorm';
+import { Equal, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import clienteAxios from 'axios';
 import { baseURL } from 'src/Services/AxiosAGempresa';
+import DateMomentsUtils from 'src/utils/dateutils';
+import { IFecha } from 'src/Model/fecha.model';
+import { Empresa } from '../Empresa/empresa.entity';
+import { promises } from 'dns';
+
 
 @Injectable()
 export class CotizacionesService {
 
-  constructor(@InjectRepository(Cotizacion) private readonly cotizacionRepository: Repository<Cotizacion>) { }
+  constructor(@InjectRepository(Cotizacion) private readonly cotizacionRepository: Repository<Cotizacion>,
+    @InjectRepository(Empresa) private readonly empresaRepository: Repository<Empresa>,
+  ) { }
 
   public async getCotizaciones() {
-      return this.cotizacionRepository.find();
+    return this.cotizacionRepository.find();
   }
-
 
   public async getCotizacionesByEmpresaEntreFechas(codEmpresa: string, fechaDesde: string, fechaHasta: string): Promise<Cotizacion[]> {
-    console.log("Get AllCotizaciones");
-    console.log(`${baseURL}/cotizaciones/${codEmpresa}/cotizaciones?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
+    const empresa = await this.empresaRepository.findOne({where: {codEmpresa}})
+    if(empresa) {
+      const respuestaGempresa: AxiosResponse<any, any> = await clienteAxios.get(`${baseURL}/empresas/${codEmpresa}/cotizaciones?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
+      console.log(respuestaGempresa.data)
+      respuestaGempresa.data.forEach(cotizacion1 => {
+        const nuevaCotizacion = new Cotizacion(
+          cotizacion1.id,
+          cotizacion1.fecha,
+          cotizacion1.hora,
+          cotizacion1.cotization,
+          empresa
+        );
+        console.log(nuevaCotizacion)
+        this.cotizacionRepository.save(nuevaCotizacion);
+      });
+      return respuestaGempresa.data;
+    }
+    }
 
-    const respuestaGempresa: AxiosResponse<any, any> = await clienteAxios.get(`${baseURL}/empresas/${codEmpresa}/cotizaciones?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`);
 
-    console.log(respuestaGempresa.data)
-    respuestaGempresa.data.forEach(cotizacion1 => {
-      const nuevaCotizacion = new Cotizacion(
-        cotizacion1.fecha,
-        cotizacion1.hora,
-        cotizacion1.dateUTC,
-        cotizacion1.cotization,
-        cotizacion1.codEmp = codEmpresa,
-      );
-      this.cotizacionRepository.save(nuevaCotizacion);
-    });
-
+    ///COTEJAR CON KEVIN
+  public async getCotizacionesFechaYHora(codEmpresa: string, fecha: string, hora: string): Promise<Cotizacion[]> {
+    const respuestaGempresa: AxiosResponse<any, any> = await clienteAxios.get(`${baseURL}/empresas/${codEmpresa}/cotizacion?fecha=${fecha}&hora=${hora}`);
+    const nuevaCotizacion = new Cotizacion(
+      respuestaGempresa.data.id,
+      respuestaGempresa.data.fecha,
+      respuestaGempresa.data.hora,
+      respuestaGempresa.data.cotization,
+      respuestaGempresa.data.codEmpresaFK
+    );
+    await this.cotizacionRepository.save(nuevaCotizacion);
     return respuestaGempresa.data;
   }
 
-  public async getCotizacionesFechaYHora(codEmpresa: string, fecha: string, hora: string): Promise<Cotizacion[]> {
-    console.log("Get otracosa");
-    console.log(`${baseURL}/cotizaciones/${codEmpresa}/cotizaciones?fecha=${fecha}&hora=${hora}`);
-    const respuestaGempresa: AxiosResponse<any, any> = await clienteAxios.get(`${baseURL}/empresas/${codEmpresa}/cotizacion?fecha=${fecha}&hora=${hora}`);
 
-    const nuevaCotizacion = new Cotizacion(
-      respuestaGempresa.data.fecha,
-      respuestaGempresa.data.hora,
-      respuestaGempresa.data.dateUTC,
-      respuestaGempresa.data.cotization,
-      respuestaGempresa.data.codEmp = codEmpresa
-    );
+  ////////////////////////////////////////////////////////////
 
-    await this.cotizacionRepository.save(nuevaCotizacion);
+  public async ultimaFechaRegistradaEnGempresa(): Promise<IFecha> {
+    const fecha = DateMomentsUtils.getUltimaFechaCotizacionGempresa();
+    return fecha;
+  }
+
+  public async ultimaFechaDeCotizacionEnMiDB(codEmpresa: string): Promise<IFecha> {
+    try {
+      console.log('codEmp:', codEmpresa);
+      const empresa = await this.empresaRepository.findOne({
+        where: { codEmpresa: codEmpresa }
+      });
+      if (!empresa) {
+        console.log(`No se encontró una empresa con codEmpresa: ${codEmpresa}`);
+        return null;
+      }
+
+      const ultimaCotizacion: Cotizacion[] = await this.cotizacionRepository.find({
+        where: { codEmpresaFK: Equal(empresa.codEmpresa) },
+        order: { id: 'DESC' },
+        take: 1
+      })
+      const fechaCotizacion = ultimaCotizacion[0];
+
+      if (!fechaCotizacion || !fechaCotizacion.fecha) {
+        const fecha: IFecha = DateMomentsUtils.transformarFechaAGMT('2024-01-01', '00:00')
+        return fecha;
+      } else {
+        const fecha: IFecha = DateMomentsUtils.transformarFechaAGMT(fechaCotizacion.fecha, fechaCotizacion.hora)
+        return fecha;
+      }
+    } catch (error) {
+      console.error("Error al buscar la ultima cotizacion: ", error);
+      return null;
+    };
+  };
+
+  public async buscarCotizacionPorID(cotizacionID: number): Promise<Cotizacion> {
+    try {
+      const cotizaciones: Cotizacion = await this.cotizacionRepository.findOne({
+        where: { id: cotizacionID }
+      });
+      return cotizaciones;
+    } catch (error) {
+      console.error("Error buscando cotizacion", error);
+      throw error;
+    };
+  }
+
+
+  public async guardarCotizacionEnDB(cotizacion: Cotizacion) {
+    try {
+      const hayCotizacion = await this.buscarCotizacionPorID(cotizacion.id)
+      if (hayCotizacion == null) {
+        const guardarCotizacion = await this.cotizacionRepository.save(cotizacion);
+        return guardarCotizacion;
+      } else {
+        console.log("Ya existe esta cotizacion en la DB");
+      }
+    } catch (error) {
+      console.error("Error guardando la cotizacion", error);
+      throw error;
+    }
+  }
+
+
+  public async getCotizacionesDeGempresaConCodEmpresaYFechasEnGMT(codEmpresa: string, stringUltimaFechaEnMiDB: string, stringUltimaFechaDeGempresa: string): Promise<Cotizacion[]> {
+    const empresa = await this.empresaRepository.findOne({
+      where: { codEmpresa }
+    });
+    const respuesta: AxiosResponse<any, any> = await clienteAxios.get(`${baseURL}/empresas/${codEmpresa}
+      /cotizaciones?fechaDesde=${stringUltimaFechaEnMiDB}&fechaHasta=${stringUltimaFechaDeGempresa}`);
+
+    respuesta.data.forEach(cotizacion => {
+      const fechaGMT = DateMomentsUtils.transformarFechaAGMT(cotizacion.fecha, cotizacion.hora);
+      if (DateMomentsUtils.horarioDeBolsa.includes(fechaGMT.hora)) {
+        const nuevaCotizacion = new Cotizacion(
+          cotizacion.id,
+          cotizacion.fecha,
+          cotizacion.hora,
+          cotizacion.cotization,
+          empresa
+        )
+        this.guardarCotizacionEnDB(nuevaCotizacion);
+      };
+    });
+    return respuesta.data;
+  }
+
+  public async guardarCotizaciones(codEmpresa: string) {
+    const ultimaFechaEnMiDB = await this.ultimaFechaDeCotizacionEnMiDB(codEmpresa);
+    const stringUltimaFechaEnMiDB = DateMomentsUtils.formatearFecha(ultimaFechaEnMiDB);
+    const ultimaFechaGempresa = await this.ultimaFechaRegistradaEnGempresa();
+    const stringUltimaFechaDeGempresa = DateMomentsUtils.formatearFecha(ultimaFechaGempresa);
+
+    this.getCotizacionesDeGempresaConCodEmpresaYFechasEnGMT(codEmpresa, stringUltimaFechaEnMiDB, stringUltimaFechaDeGempresa)
+  }
 
 
 
-    return respuestaGempresa.data;
+  public async getFiltrarCotizaciones(codEmpresa: string): Promise<Cotizacion[]> {
+    try {
+      const cotizacionesEmpresa = await this.cotizacionRepository.find({
+        relations: ['codEmpresaFK'], // Relación a incluir
+        where: {
+          codEmpresaFK: {
+            codEmpresa: codEmpresa, // Aquí 'id' se debe reemplazar por el nombre de la columna de `Empresa` que corresponde a `codEmpresa`
+          },
+        }});
+      return cotizacionesEmpresa
+    } catch (error) {
+      console.error("Error al filtrar cotizaciones por codEmpresa: ", error);
+      throw new Error("No se pudo obtener las cotizaciones");
+    }
   }
 
 }
+
+
+
+
+
+
 
 // http://ec2-54-145-211-254.compute-1.amazonaws.com:3000/cotizaciones/BABA/cotizaciones?fechaDesde=undefined&fechaHasta=undefined
 // http://ec2-54-145-211-254.compute-1.amazonaws.com:3000/cotizaciones/BABA/cotizaciones?fechaDesde=undefined&fechaHasta=undefined

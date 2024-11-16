@@ -1,54 +1,48 @@
-import {  Column, PrimaryGeneratedColumn, Entity } from "typeorm";
+import {  Column, PrimaryGeneratedColumn, Entity, OneToMany, JoinColumn, ManyToOne } from "typeorm";
+import { Empresa } from "../Empresa/empresa.entity";
 @Entity('cotizaciones')
 export class Cotizacion {
   @PrimaryGeneratedColumn({
     type: 'bigint',
   })
-  private id: number;
+  public id: number;
 
   @Column({
     name: 'fecha',
     type: 'varchar',
     precision: 10,
   })
-  private fecha: string;
+  public fecha: string;
 
   @Column({
     name: 'hora',
     type: 'varchar',
     precision: 5,
   })
-  private hora: string;
+  public hora: string;
 
   @Column({
-    type: 'date',
-  })
-  private dateUTC: Date;
-
-  @Column({
-    name: 'cotization',
+    name: 'cotizacion',
     type: 'decimal',
     precision: 7,
     scale: 2,
   })
-  public cotization: number;
+  public cotizacion: number;
 
-  @Column({
-    name: 'codEmp',
-    type: 'varchar',
-    precision: 10,
+  @ManyToOne(() => Empresa, (empresa) => empresa.cotizacionesFK)
+  @JoinColumn({
+    name: 'codEmpresa',
+    foreignKeyConstraintName: 'FK_codEmpresa'
   })
-  private codEmp: string;
+  public codEmpresaFK: Empresa;
 
 
-
-
-  constructor(fecha: string, hora: string, dateUTC: Date, cotization: number, codEmp: string) {
+  constructor(id: number, fecha: string, hora: string, cotizacion: number, codEmpresaFK: Empresa) {
+    this.id = id;
     this.fecha = fecha;
     this.hora = hora;
-    this.dateUTC = dateUTC;
-    this.cotization = cotization;
-    this.codEmp = codEmp;
+    this.cotizacion = cotizacion;
+    this.codEmpresaFK = codEmpresaFK;
 
   }
 
