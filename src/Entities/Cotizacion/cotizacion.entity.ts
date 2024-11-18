@@ -4,7 +4,7 @@ import { Empresa } from "../Empresa/empresa.entity";
 export class Cotizacion {
   @PrimaryGeneratedColumn({
     type: 'bigint',
-  })
+})
   public id: number;
 
   @Column({
@@ -14,12 +14,14 @@ export class Cotizacion {
   })
   public fecha: string;
 
+
   @Column({
     name: 'hora',
     type: 'varchar',
     precision: 5,
   })
   public hora: string;
+
 
   @Column({
     name: 'cotizacion',
@@ -34,8 +36,7 @@ export class Cotizacion {
     name: 'codEmpresa',
     foreignKeyConstraintName: 'FK_codEmpresa'
   })
-  public codEmpresaFK: Empresa;
-
+  public codEmpresaFK: Empresa;  
 
   constructor(id: number, fecha: string, hora: string, cotizacion: number, codEmpresaFK: Empresa) {
     this.id = id;
@@ -43,8 +44,5 @@ export class Cotizacion {
     this.hora = hora;
     this.cotizacion = cotizacion;
     this.codEmpresaFK = codEmpresaFK;
-
   }
-
-
 }

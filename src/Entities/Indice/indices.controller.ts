@@ -1,26 +1,22 @@
-import { Controller, Get, Post } from "@nestjs/common";
-import { IndicesService } from "src/Entities/Indice/indices.services";
-import { Indice } from "./indice.entity";
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { IndiceService } from './indices.services';
+import { Iindice } from './iIndice';
+import { IndiceCotizacion } from './iIndice';
+import { Indice } from './indice.entity';
 
-@Controller('/indices')
-export class IndicesController {
-  constructor(private indicesService: IndicesService) { }
 
-  @Get()
-  public getTodosLosIndicesDeGempresa(): Promise<Indice[]> {
-    console.log("Indices back");
-    return this.indicesService.getTodosLosIndicesDeGempresa();
+@Controller('indice')
+export class IndiceController {
+  constructor(private readonly indiceService: IndiceService) { }
+
+  @Get('/saveDb')
+  public async saveAllIndices(): Promise<Indice[]> {
+    return await this.indiceService.saveAllIndicesDb()
   }
-
-/*   @Get('save') */
 
   @Post()
-  public crearIndice() {
-    return this.crearIndice()
+  async createIndice(@Body() body: { code: string; name: string },): Promise<void> {
+    console.log('entro post')
+    await this.indiceService.createIndice(body);
   }
-
-//   @Post()
-//   public subirNuevoValorDeIndiceCadaHoraAGempresa(): void {
-//     this.indicesService.subirNuevoValorDeIndiceCadaHoraAGempresa();
-//   }
 }

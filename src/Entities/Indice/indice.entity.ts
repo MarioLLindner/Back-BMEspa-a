@@ -1,51 +1,43 @@
-import { Entity, Column, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-// id - codigoIndice(TSX) - nombreIndice - fecha - hora - valorIndice
+import { Column, PrimaryGeneratedColumn, Entity, OneToMany } from "typeorm";
+import { IndiceCotizacion } from "../IndiceCotizacion/indiceCotizacion.entity";
+
 
 @Entity('indices')
 export class Indice {
   @PrimaryGeneratedColumn({
-    type: 'int'
-  })
-  private id: number;
-
-  @Column({
-    name: 'codigoIndice',
-    length: 10,
-  })
-  private codigoIndice: string;
-
-  @Column({
-    name: 'nombre',
-    length: 100,
-  })
-  private nombreIndice: string;
-
-  @Column({
-    name: 'fecha',
-    type: 'varchar',
-    precision: 10,
-  })
-  private fecha: string;
-
-  @Column({
-    name: 'hora',
-    type: 'varchar',
-    precision: 5,
-  })
-  public hora: string;
-
-  @Column({
-    name: 'valorIndice',
     type: 'bigint',
   })
-  public valorIndice: number;
+  public id: number;
 
-  constructor(id: number, codigoIndice: string, nombreIndice: string, fecha: string, hora: string, valorIndice: number) {
+  @Column({
+    name: 'codIndice',
+    type: 'varchar',
+    length: 20,
+    unique: true,
+  })
+  public codeIndice: string;
+
+  @Column({
+    name: 'nombreIndice',
+    type: 'varchar',
+    length: 50,
+  })
+  public nombreIndice: string;
+
+  @Column({
+    name: 'v',
+    type: 'bigint',
+    precision: 5,
+  })
+  public v: number;
+
+  @OneToMany(() => IndiceCotizacion, (cotizacion) => cotizacion.codeIndice)
+  public cotizaciones: IndiceCotizacion[];
+
+  constructor(id: number, codeIndice: string, nombreIndice: string, v: number) {
     this.id = id;
-    this.codigoIndice = codigoIndice;
+    this.codeIndice = codeIndice;
     this.nombreIndice = nombreIndice;
-    this.fecha = fecha;
-    this.hora = hora;
-    this.valorIndice = valorIndice;
-  };
-};
+    this.v = v;
+  }
+}

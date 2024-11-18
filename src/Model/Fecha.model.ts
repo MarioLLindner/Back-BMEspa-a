@@ -1,4 +1,6 @@
 export interface IFecha {
-    fecha: string;
-    hora: string;
-  }
+  //YYYY-MM-DD
+  fecha: string;
+  //HH:MM
+  hora: string;
+}

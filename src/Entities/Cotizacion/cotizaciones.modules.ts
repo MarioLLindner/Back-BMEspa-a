@@ -9,8 +9,8 @@ import { Empresa } from '../Empresa/empresa.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Cotizacion, Empresa])],
-  controllers: [CotizacionesController,EmpresasController],
-  providers: [CotizacionesService,EmpresasService],
+  controllers: [CotizacionesController, EmpresasController],
+  providers: [CotizacionesService, EmpresasService],
 })
 
 export class CotizacionesModule {}

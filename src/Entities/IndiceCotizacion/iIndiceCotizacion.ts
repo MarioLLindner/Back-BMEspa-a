@@ -5,7 +5,7 @@ export class Iindice {
   }
   
   //este el para subir a gempresa 
-  export interface IndiceCotizacion {
+  export interface IindiceCotizacion {
     fecha: string;
     hora: string;
     codigoIndice: string;

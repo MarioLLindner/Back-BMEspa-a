@@ -1,68 +1,67 @@
-import { Body, ConsoleLogger, Controller, Get, Param, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Query, Logger } from "@nestjs/common";
 import { CotizacionesService } from "src/Entities/Cotizacion/cotizaciones.services";
 import { Cotizacion } from "./cotizacion.entity";
 import { EmpresasService } from "../Empresa/empresas.services";
 
 @Controller('/cotizaciones')
 export class CotizacionesController {
-  constructor(private cotizacionesService: CotizacionesService, private empresaService: EmpresasService) { }
+  constructor(
+    private cotizacionesService: CotizacionesService,
+    private empresaService: EmpresasService,
+  ) { }
+  private readonly logger = new Logger(CotizacionesController.name);
 
-
-  //controlado
+  //Trae todas las cotizaciones guardadas en mi DB Local
+  //Postman: http://localhost:8080/cotizaciones/
   @Get()
-  public getCotizaciones(): Promise <Cotizacion[]> {
-    console.log("Cotizaciones back");
+  public getCotizaciones(): Promise<Cotizacion[]> {
+    this.logger.log("CC - Obteniendo todas las cotizaciones");
     return this.cotizacionesService.getCotizaciones();
   }
 
-
-  //controlado
-  @Get('/UTC/:codEmpresa')
-  public getCotizacionesUTCByEmpresaEntreFechas(
+  //UTC
+  //Formato 2024-11-14T00:00 (YYYY-MM-DDTHH:MM)
+  //http://localhost:8080/cotizaciones/entreFechas/V?fechaDesde=2024-01-01T01:00&fechaHasta=2024-01-02T10:00
+  @Get('/entreFechas/:codEmpresa')
+  public getCotizacionesEntreFechas(
     @Param('codEmpresa') codEmpresa: string,
     @Query('fechaDesde') fechaDesde: string,
-    @Query('fechaHasta') fechaHasta: string): Promise <Cotizacion[]> {
-    console.log("Cotizaciones back");
-    return this.cotizacionesService.getCotizacionesByEmpresaEntreFechas(codEmpresa, fechaDesde, fechaHasta);
+    @Query('fechaHasta') fechaHasta: string): Promise<Cotizacion[]> {
+    this.logger.log(`CC - Obteniendo cotizaciones desde Gempresa de la empresa ${codEmpresa} entre ${fechaDesde} y ${fechaHasta}`);
+
+
+    return this.cotizacionesService.getCotizacionesEntreFechas(codEmpresa, fechaDesde, fechaHasta);
   }
 
-// COTEJAR CON KEVIN
-  @Get('/:codEmpresa/cotizacion')
-  public getCotizacionesUTCFechaYHora(
+  //UTC
+  //http://localhost:8080/cotizaciones/fechayhora/V?fecha=2024-01-01&hora=08:00
+  @Get('fechayhora/:codEmpresa')
+  public getCotizacionesFechaYHora(
     @Param('codEmpresa') codEmpresa: string,
     @Query('fecha') fecha: string,
-    @Query('hora') hora: string): Promise <Cotizacion[]> {
-      console.log("Cotizaciones back");
-      return this.cotizacionesService.getCotizacionesFechaYHora(codEmpresa, fecha, hora);
-    }
-    
-    
-    
-    
-    //Obtengo todas las cotizaciones de Gempresa y las Guardo en mi DB
-    @Get('/traerCotizaciones/cot')
-    public async getAllCotizaciones(): Promise<void> {
-      const arrCodigosEmpresas = await this.empresaService.buscarMisCodEmpresas();
+    @Query('hora') hora: string): Promise<Cotizacion[]> {
+    this.logger.log(`CC - Obteniendo cotizacion de la empresa ${codEmpresa} el dia ${fecha} a la hora ${hora}`);
+    return this.cotizacionesService.getCotizacionesFechaYHora(codEmpresa, fecha, hora);
+  }
+
+
+
+  //http://localhost:8080/cotizaciones/traerCotizacionesMisEmpresas
+  @Get('/traerCotizacionesMisEmpresas')
+  public async actualizarCotizacionesMisEmpresas(): Promise<void> {
+  
+    const arrCodigosEmpresas = /* ["AAPL","KO","JPM"] */await this.empresaService.buscarMisEmpresasDeDB();
+    if (arrCodigosEmpresas && arrCodigosEmpresas.length > 0) {
       for (const codEmpresa of arrCodigosEmpresas) {
-        await this.cotizacionesService.guardarCotizaciones(codEmpresa);
+        try {
+          await this.cotizacionesService.guardarTodasLasCotizaciones(codEmpresa);
+        } catch (error) {
+          this.logger.error(`Error al actualizar cotizaciones para la empresa ${codEmpresa}: ${error.message}`);
+        }
       }
-    }
-    
-    //Filtro en mi DB las Cotizaciones por Empresa
-    @Get('/filtrarCotdemiDB/:codEmpresa')
-    public async GetFiltrarCot(@Param('codEmpresa') codEmpresa: string): Promise<Cotizacion[]> {
-      console.log("Filtrado de cotizaciones de mi DB por codEmpresa")
-      return this.cotizacionesService.getFiltrarCotizaciones(codEmpresa)
+    } else {
+      this.logger.error("No hay empresas en su DB Local o la búsqueda falló");
     }
   }
   
-  
-  /*   @Get('/:codEmpresa')
-    public getCotizacionesByEmpresaEntreFechas(
-      @Param('codEmpresa') codEmpresa: string,
-      @Query('fechaDesde') fechaDesde: string,
-      @Query('fechaHasta') fechaHasta: string): Promise <Cotizacion[]> {
-      console.log("Cotizaciones back");
-      return this.cotizacionesService.getCotizacionesByEmpresaEntreFechas(codEmpresa, fechaDesde, fechaHasta);
-    } */
-
+}
