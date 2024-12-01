@@ -1,15 +1,22 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { IndiceModule } from './Entities/Indice/indices.modules';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ConfigModule } from '@nestjs/config';
+import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { EmpresasModule } from './Entities/Empresa/empresas.modules';
 import { CotizacionesModule } from './Entities/Cotizacion/cotizaciones.modules';
-import { DevtoolsModule } from '@nestjs/devtools-integration';
-import { ConfigModule } from '@nestjs/config';
+import { IndicesModule } from './Entities/Indice/indices.modules';
+import { CronService } from './Services/cronService';
+import { DatabaseService } from './Services/Database.service';
+import { CotizacionesService } from './Entities/Cotizacion/cotizaciones.services';
+import { CotizacionIndiceService } from './Entities/IndiceCotizacion/IndiceCotizacion.service';
+import { EmpresasService } from './Entities/Empresa/empresas.services';
+import { CotizacionIndiceModule } from './Entities/IndiceCotizacion/IndiceCotizacion.module';
+
 @Module({
-  imports: [ 
+  imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.MYSQL_HOST,
@@ -24,11 +31,13 @@ import { ConfigModule } from '@nestjs/config';
     DevtoolsModule.register({
       http: process.env.NODE_ENV !== 'production',
     }),
-/*     IndiceModule, */
+    IndicesModule,
     EmpresasModule,
     CotizacionesModule,
+    CotizacionIndiceModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [CronService, CotizacionesService, CotizacionIndiceService, EmpresasService, DatabaseService],
 })
 export class AppModule {}
+
+

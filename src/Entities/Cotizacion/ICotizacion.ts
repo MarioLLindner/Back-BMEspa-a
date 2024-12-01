@@ -1,23 +1,3 @@
-// import { IsArray, IsInt, IsNumber, IsString } from "class-validator"
-
-// class CotizacionDTO {
-//     @IsInt()
-//     id: number;
-
-//     @IsString()
-//     empresa: string;
-
-//     @IsString()
-//     fecha: string;
-
-//     @IsString()
-//     hora: string;
-
-//     @IsNumber()
-//     precioDolar: number;
-// }
-// export default CotizacionDTO
-
 export interface ICotizacion {
     id?: number;
     fecha: string;
@@ -25,4 +5,11 @@ export interface ICotizacion {
     dateUTC: Date;
     cotizacion: number;
     idEmpresa: number;
+}
+
+export interface CotizacionFront {
+    fecha: string;
+    hora: string;
+    idEmpresa: number;
+    cotizacion: number;
 }

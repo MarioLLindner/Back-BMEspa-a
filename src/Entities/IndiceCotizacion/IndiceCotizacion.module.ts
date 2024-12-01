@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
-import { indiceCotizacionController } from './indiceCotizacion.controller';
-import { IndiceCotizacion } from './indiceCotizacion.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IndiceCotizacionService } from './indiceCotizacion.service';
-import { Cotizacion } from '../Cotizacion/cotizacion.entity';
+import { CotizacionIndiceService } from './IndiceCotizacion.service';
+import { CotizacionIndiceController } from './IndiceCotizacion.controller';
+import { IndicesService } from '../Indice/indices.services';
+import { CotizacionIndice } from './IndiceCotizacion.entity';
 import { Indice } from '../Indice/indice.entity';
+import { CotizacionesModule } from '../Cotizacion/cotizaciones.modules';
+import { IndicesModule } from '../Indice/indices.modules';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([IndiceCotizacion,Cotizacion,Indice])],
-  controllers: [indiceCotizacionController],
-  providers: [IndiceCotizacionService],
+  imports: [TypeOrmModule.forFeature([CotizacionIndice, Indice]), CotizacionesModule, IndicesModule],
+  controllers: [CotizacionIndiceController],
+  providers: [CotizacionIndiceService],
+  exports: [CotizacionIndiceService, TypeOrmModule],
 })
-export class IndiceCotizacionModule {}
+export class CotizacionIndiceModule {}

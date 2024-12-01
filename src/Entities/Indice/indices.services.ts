@@ -1,61 +1,66 @@
-import { Injectable } from '@nestjs/common';
-import { Indice } from './indice.entity';
-import clienteAxios, { AxiosResponse } from 'axios';
-import { baseURL } from 'src/services/AxiosAGempresa';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IFecha } from 'src/model/fecha.model';
-import DateMomentUtils from 'src/utils/dateUtils';
+import axios, { AxiosResponse } from 'axios';
+import { baseURL } from 'src/Services/AxiosAGempresa';
+import { CotizacionIndice } from '../IndiceCotizacion/IndiceCotizacion.entity';
+import { Indice } from './indice.entity';
 
 @Injectable()
-export class IndiceService {
-  constructor(@InjectRepository(Indice) private readonly indiceRepository: Repository<Indice>){}
-  
-  async createIndice(body):Promise<void>{
-    try {
-      await clienteAxios.post(`${baseURL}/indices`, body)
-    } catch (error) {
-      console.error('El indice ya existe', 409)
-    }
-    
+export class IndicesService {
+  constructor(
+    @InjectRepository(Indice) private readonly indicesRepository: Repository<Indice>,
+    @InjectRepository(CotizacionIndice) private readonly cotizacionIndiceRepository: Repository<CotizacionIndice>,
+  ) { }
+
+  private readonly logger = new Logger(IndicesService.name);
+
+  public async actualizarIndicesDesdeGempresa(): Promise<void> {
+    const todosLosIndicesDeGempresa: AxiosResponse<any, any> = await axios.get(`${baseURL}/indices`);
+    const arregloDeIndices = todosLosIndicesDeGempresa.data.filter(aux => aux.code && aux.name).map(async (aux) => {
+      const nuevoIndice = new Indice(
+        aux.code,
+        aux.name,
+        aux.__v
+      )
+      await this.guardarIndiceEnDB(nuevoIndice);
+    })
+    await Promise.all(arregloDeIndices);
   }
 
-  async findIndiceByCod(code: string): Promise<Indice> {
-    try {
-      const indiceCotizacion:Indice = await this.indiceRepository.findOne({
-        where: { codeIndice: code },
+  public async guardarIndiceEnDB(indice: Indice): Promise<Indice> {
+    const indiceExisteEnDBLocal = await this.indicesRepository.findOne(
+      {
+        where: { codigoIndice: indice.codigoIndice }
       })
-      console.log('indiceCotizacion:',indiceCotizacion)
-      return indiceCotizacion
+    try {
+      if (indiceExisteEnDBLocal == null) {
+        return this.indicesRepository.save(indice);
+      }
     } catch (error) {
-      console.error("Error buscando indice Cotizacion:", error);
+      this.logger.error("Error guardando el índice:", error);
       throw error;
     }
   }
 
-  public async saveAllIndicesDb(): Promise<Indice[]> {
-    const respuesta: AxiosResponse<any, any> = await clienteAxios.get(`${baseURL}/indices`);
-    console.log('respuesta.data:',respuesta.data)  
-    const promesasGuardado = respuesta.data.map(async (indice) => {
-        if (await this.findIndiceByCod(indice.code) == null) {
-          console.log('indice.data:',indice)  
-          const newIndice = new Indice(
-            indice.id,
-            indice.code,
-            indice.name,
-            indice.__v,
-          );
-          console.log('newIndice:',newIndice)  
-          await this.indiceRepository.save(newIndice);
-          return newIndice
-        }else{
-          console.log(`El indice code: ${indice.code} ya existe en la db`)
-        }
-      }
-      );
-  
-      await Promise.all(promesasGuardado);
-    return respuesta.data;
+
+  public async buscarMisIndicesDeDB(): Promise<string[]> {
+    const Indices = await this.indicesRepository.find({ select: ["codigoIndice"] });
+    return Indices.map(indice => indice.codigoIndice);
+  };
+
+
+  public async ObtenerDetallesDeIndices(codigoIndice: string): Promise<Indice> {
+    try {
+      const indiceDetalleEnDBLocal = await this.indicesRepository.findOne(
+        {
+          where: { codigoIndice: codigoIndice }
+        })
+        return indiceDetalleEnDBLocal
+    } catch (error) {
+      this.logger.error("ES - El codigo de empresa indicado no existe. Intente con otro.");
+    };
+  }
 }
 
-}
+

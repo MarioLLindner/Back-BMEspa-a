@@ -1,9 +1,9 @@
 import { Column, PrimaryGeneratedColumn, Entity, ManyToOne, JoinColumn } from "typeorm";
-import { Indice } from "../Indice/indice.entity";
+import { Indice } from "src/Entities/Indice/indice.entity";
 
 
-@Entity('indiceCotizaciones')
-export class IndiceCotizacion {
+@Entity('cotizacionesIndices')
+export class CotizacionIndice {
   @PrimaryGeneratedColumn({
     type: 'bigint',
   })
@@ -24,30 +24,25 @@ export class IndiceCotizacion {
   public hora: string;
 
   @Column({
-    name: 'indiceCotizacion',
+    name: 'valorCotizacionIndice',
     type: 'decimal',
     precision: 20,
-    scale: 4,
+    scale: 2,
   })
-  public indiceCotizacion: number;
+  public valorCotizacionIndice: number;
 
 
   @ManyToOne(() => Indice, (indice) => indice.cotizaciones)
   @JoinColumn({
-    name: 'codeIndice',
-    referencedColumnName: 'codeIndice',
+    name: 'codigoIndice',
+    referencedColumnName: 'id',
   })
-  public codeIndice: Indice;
+  public codigoIndice: Indice;
 
-  constructor(
-    fecha: string,
-    hora: string,
-    indiceCotizacion: number,
-    codeIndice: Indice
-  ) {
+  constructor(fecha: string, hora: string, valorCotizacionIndice: number, codigoIndice: Indice) {
     this.fecha = fecha;
     this.hora = hora;
-    this.indiceCotizacion = indiceCotizacion;
-    this.codeIndice = codeIndice;
+    this.valorCotizacionIndice = valorCotizacionIndice;
+    this.codigoIndice = codigoIndice;
   }
 }

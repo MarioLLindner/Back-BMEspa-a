@@ -1,4 +1,4 @@
-import {  Column, PrimaryGeneratedColumn, Entity, OneToMany, JoinColumn, ManyToOne } from "typeorm";
+import {  Column, PrimaryGeneratedColumn, Entity, JoinColumn, ManyToOne } from "typeorm";
 import { Empresa } from "../Empresa/empresa.entity";
 @Entity('cotizaciones')
 export class Cotizacion {
