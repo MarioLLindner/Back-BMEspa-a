@@ -1,5 +1,5 @@
 import * as momentTZ from 'moment-timezone';
-import { IFecha } from 'src/Model/fecha.model';
+import { IFecha } from 'src/Model/Fecha.model';
 import { Logger } from '@nestjs/common';
 
 class DateMomentsUtils {

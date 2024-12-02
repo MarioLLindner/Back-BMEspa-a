@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from 'src/Services/AxiosAGempresa';
-import DateMomentsUtils from 'src/utils/DateUtils';
-import { IFecha } from 'src/Model/fecha.model';
+import DateMomentsUtils from 'src/utils/dateutils';
+import { IFecha } from 'src/Model/Fecha.model';
 import { Empresa } from '../Empresa/empresa.entity';
 
 @Injectable()
