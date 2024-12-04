@@ -24,7 +24,7 @@ import { CotizacionIndiceModule } from './Entities/IndiceCotizacion/IndiceCotiza
       username: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DB,
-      synchronize: true,
+      synchronize: false,
       entities: ["dist/**/**.entity{.ts,.js}"],
       logging: 'all',
     }),
